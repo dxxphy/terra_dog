@@ -61,7 +61,17 @@ def play(args):
                                                       **policy_cfg_dict)
     print(policy)
     #model_dict = torch.load(os.path.join(ROOT_DIR, 'model_4000_phase2_hip.pt'))
-    model_dict = torch.load(os.path.join(ROOT_DIR, 'model_6000.pt'))
+    
+    if args.checkpoint_path is not None:
+        checkpoint_path = args.checkpoint_path
+        if not os.path.isabs(checkpoint_path):
+            checkpoint_path = os.path.join(ROOT_DIR, checkpoint_path)
+        print(f"Loading model from: {checkpoint_path}")
+    else:
+        checkpoint_path = os.path.join(ROOT_DIR, 'model_6000.pt')
+        print(f"Loading default model: {checkpoint_path}")
+    
+    model_dict = torch.load(checkpoint_path)
     policy.load_state_dict(model_dict['model_state_dict'])
     policy = policy.to(env.device)
     policy.save_torch_jit_policy('model.pt',env.device)
