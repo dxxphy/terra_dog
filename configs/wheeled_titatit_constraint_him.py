@@ -32,7 +32,7 @@ from configs.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
 class WheeledTitatitConstraintHimRoughCfg( LeggedRobotCfg ):
     class env(LeggedRobotCfg.env):
-        num_envs = 4096
+        num_envs = 8192
 
         n_scan = 187
         n_priv_latent =  4 + 1 + 16 + 16 + 16 + 6 + 1 + 4 + 1 - 3
