@@ -1,95 +1,426 @@
 # TERRA_DOG
-面向复杂地形的轮足式机器狗运动控制研究
+
+## 项目名称：面向复杂地形的轮足式机器狗运动控制研究
+
+### 项目概述
 
 结合轮式机器人的效率与足式机器人的越障能力，本项目研究轮足式机器狗在复杂地形（如楼梯、碎石、斜坡）下的混合运动模式。核心内容包括：基于强化学习的全地形运动控制，旨在提升机器人在非结构环境下的通过性和稳定性。
 
+本仓库强化学习部分基于：
 
-## Getting started
+- [N3PO Locomotion](https://github.com/zeonsunlightyu/LocomotionWithNP3O.git)
+- [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### 参考环境
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+| Environment        | Description                     |
+| ------------------ | ------------------------------- |
+| 显卡               | RTX 4090                        |
+| CUDA               | CUDA 12.4                       |
+| 训练环境           | Isaac Gym                       |
+| sim2sim            | Webots 2023                     |
+| ROS                | ROS 2 Humble                    |
+| 推理               | RTX 4090 / Jetson Orin NX on TITA + TensorRT |
+| 虚拟环境           | Miniconda                       |
 
-## Add your files
+---
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## 快速开始
+
+### 项目结构
 
 ```
-cd existing_repo
-git remote add origin http://1.95.9.8/ug_project_2026spring/terra_dog.git
-git branch -M main
-git push -uf origin main
+quadruped-wheel-titatit-rl/
+├── algorithm/           # 算法实现（PPO等）
+├── configs/             # 配置文件
+│   └── wheeled_titatit_constraint_him.py
+├── envs/                # 环境定义
+│   ├── legged_robot.py  # 腿式机器人基类
+│   └── vec_env.py       # 向量化环境
+├── modules/             # 神经网络模块
+│   ├── actor_critic.py  # Actor-Critic网络
+│   └── common_modules.py
+├── runner/              # 训练运行器
+├── utils/               # 工具函数
+├── resources/           # 资源文件（URDF、mesh等）
+├── train.py             # 训练脚本
+├── simple_play.py       # 模型测试/可视化脚本
+└── logs/                # 训练日志和模型保存目录
 ```
 
-## Integrate with your tools
+---
 
-- [ ] [Set up project integrations](http://1.95.9.8/ug_project_2026spring/terra_dog/-/settings/integrations)
+## 训练
 
-## Collaborate with your team
+### 开始训练
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+使用默认配置开始训练：
 
-## Test and Deploy
+```bash
+python train.py --task=wheeled_titatit
+```
 
-Use the built-in continuous integration in GitLab.
+### 自定义训练参数
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```bash
+# 指定训练迭代次数
+python train.py --task=wheeled_titatit --max_iterations=10000
 
-***
+# 指定环境数量
+python train.py --task=wheeled_titatit --num_envs=4096
 
-# Editing this README
+# 设置随机种子
+python train.py --task=wheeled_titatit --seed=42
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+# 指定实验名称
+python train.py --task=wheeled_titatit --experiment_name=my_experiment
 
-## Suggestions for a good README
+# 指定运行名称
+python train.py --task=wheeled_titatit --run_name=test_run
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 从某个位置继续训练
 
-## Name
-Choose a self-explaining name for your project.
+从最新的 checkpoint 继续训练：
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```bash
+python train.py --task=wheeled_titatit --resume
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+从指定的运行继续训练：
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+```bash
+# 继续上一次运行
+python train.py --task=wheeled_titatit --resume --load_run=-1
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+# 继续指定的运行（使用运行目录名）
+python train.py --task=wheeled_titatit --resume --load_run=Apr07_01-51-37_test_barlowtwins_feetcontact
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+# 从指定的 checkpoint 继续
+python train.py --task=wheeled_titatit --resume --checkpoint=3000
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+# 组合使用
+python train.py --task=wheeled_titatit --resume --load_run=Apr07_01-51-37_test_barlowtwins_feetcontact --checkpoint=5000
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 训练参数说明
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+| 参数                   | 类型    | 默认值    | 说明                                     |
+| ---------------------- | ------- | --------- | ---------------------------------------- |
+| `--task`               | str     | go1       | 任务名称                                 |
+| `--resume`             | flag    | False     | 是否从 checkpoint 继续训练               |
+| `--experiment_name`    | str     | -         | 实验名称                                 |
+| `--run_name`           | str     | -         | 运行名称                                 |
+| `--load_run`           | str     | -1        | 要加载的运行名称，-1 表示最新运行        |
+| `--checkpoint`         | int     | -1        | checkpoint 编号，-1 表示最新 checkpoint  |
+| `--max_iterations`     | int     | -         | 最大训练迭代次数                         |
+| `--num_envs`           | int     | -         | 环境数量                                 |
+| `--seed`               | int     | -         | 随机种子                                 |
+| `--headless`           | flag    | False     | 无头模式（不显示图形界面）               |
+| `--rl_device`          | str     | cuda:0    | RL 算法使用的设备                        |
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+---
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## 监控训练
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### 使用 TensorBoard
 
-## License
-For open source projects, say how it is licensed.
+在训练过程中或训练后，使用 TensorBoard 查看训练曲线和指标：
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+```bash
+# 启动 TensorBoard
+tensorboard --logdir logs/rough_wheeled_titatit_constraint
+
+# 指定端口
+tensorboard --logdir logs/rough_wheeled_titatit_constraint --port 6007
+
+# 允许外部访问
+tensorboard --logdir logs/rough_wheeled_titatit_constraint --bind_all
+```
+
+然后在浏览器中打开 `http://localhost:6006` 查看训练曲线。
+
+### 理解关键指标
+
+- **episode_length**: 每个回合的平均长度
+- **mean_reward**: 平均奖励（越高越好）
+- **mean_episode_length**: 平均回合长度
+- **mean_episode_reward**: 平均回合奖励
+- **action_rate**: 动作变化率（越小越平滑）
+- **z_vel**: Z轴速度（垂直运动，越小越稳定）
+- **xy_vel**: XY角速度（旋转运动，越小越稳定）
+- **feet_air_reward**: 脚在空中的奖励
+
+### 查看保存的模型
+
+训练过程中会定期保存模型 checkpoint，保存在 `logs/rough_wheeled_titatit_constraint/<run_name>/` 目录下：
+
+```bash
+# 列出所有运行
+ls -lh logs/rough_wheeled_titatit_constraint/
+
+# 列出特定运行的所有模型
+ls -lh logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/
+```
+
+模型文件格式为 `model_<iteration>.pt`，例如 `model_1000.pt`、`model_3000.pt` 等。
+
+---
+
+## 模型测试与可视化
+
+### Simple Play 基本用法
+
+`simple_play.py` 用于加载训练好的模型并进行可视化测试。
+
+#### 加载默认模型
+
+```bash
+python simple_play.py --task=wheeled_titatit
+```
+
+这会加载根目录下的 `model_6000.pt`（默认模型）。
+
+#### 加载指定路径的模型
+
+```bash
+# 使用相对路径
+python simple_play.py --task=wheeled_titatit \
+    --checkpoint_path logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/model_3000.pt
+
+
+# 加载根目录的模型
+python simple_play.py --task=wheeled_titatit --checkpoint_path model_6000.pt
+```
+
+#### 无头模式（不显示图形界面）
+
+```bash
+python simple_play.py --task=wheeled_titatit --headless
+```
+
+
+### 推荐工作流程
+
+1. **使用 TensorBoard 查看训练曲线**
+   ```bash
+   tensorboard --logdir logs/rough_wheeled_titatit_constraint
+   ```
+   在浏览器中打开 `http://localhost:6006` 查看训练曲线，找出性能最好的 checkpoint。
+
+2. **加载性能最好的模型**
+   假设发现 3500 步的奖励最高：
+   ```bash
+   python simple_play.py --task=wheeled_titatit \
+       --checkpoint_path logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/model_3500.pt
+   ```
+
+3. **查看生成的统计信息**
+   运行后会在终端输出：
+   - `action rate`: 动作变化率（越小越平滑）
+   - `z vel`: Z轴速度（垂直运动，越小越稳定）
+   - `xy_vel`: XY角速度（旋转运动，越小越稳定）
+   - `feet air reward`: 脚在空中的奖励
+   
+   这些指标越低，说明机器人运动越平稳。
+
+4. **录制视频**
+   运行后会在当前目录生成 `record.mp4` 文件。
+
+### Simple Play 参数说明
+
+| 参数              | 类型    | 默认值    | 说明                                   |
+| ----------------- | ------- | --------- | -------------------------------------- |
+| `--task`          | str     | wheeled_titatit | 任务名称                           |
+| `--checkpoint_path` | str   | None      | 模型文件的完整路径                     |
+| `--headless`      | flag    | False     | 无头模式（不显示图形界面）             |
+
+### 视频录制说明
+
+- 默认使用 MP4V 编码器，生成的视频格式为 MP4
+- 视频保存在当前目录，文件名为 `record.mp4`
+- 视频时长约 40 秒（可在 `simple_play.py` 第 97 行修改）
+- 如果需要在某些播放器中播放，可能需要安装相应的解码器
+
+**更换视频编码器：**
+
+如需更通用的格式，可以修改 `simple_play.py` 第 130 行：
+
+```python
+# 改为 MJPEG（最兼容）
+video = cv2.VideoWriter('record.avi', cv2.VideoWriter_fourcc(*'MJPG'), int(1 / env.dt), (img.shape[1],img.shape[0]))
+
+# 改为 H.264（需要额外编译支持）
+video = cv2.VideoWriter('record.mp4', cv2.VideoWriter_fourcc(*'avc1'), int(1 / env.dt), (img.shape[1],img.shape[0]))
+```
+
+---
+
+## 高级功能
+
+### 批量生成多个 checkpoint 的视频
+
+创建一个脚本 `batch_record.sh`：
+
+```bash
+#!/bin/bash
+RUN_NAME="Apr07_01-51-37_test_barlowtwins_feetcontact"
+CHECKPOINTS=(1000 2000 3000 4000 5000 6000)
+
+for i in "${CHECKPOINTS[@]}"; do
+    echo "Processing model_$i.pt..."
+    python simple_play.py --task=wheeled_titatit \
+        --checkpoint_path logs/rough_wheeled_titatit_constraint/$RUN_NAME/model_${i}.pt
+    mv record.mp4 record_model_${i}.mp4
+done
+
+echo "All videos generated!"
+```
+
+运行脚本：
+
+```bash
+chmod +x batch_record.sh
+./batch_record.sh
+```
+
+### 导出模型为 TorchScript 格式
+
+训练好的模型可以导出为 TorchScript 格式，用于部署：
+
+```bash
+python simple_play.py --task=wheeled_titatit --checkpoint_path model_6000.pt
+```
+
+运行后会自动在当前目录生成 `model.pt` 文件，这是导出的 TorchScript 模型。
+
+---
+
+## 常见问题
+
+### Q: 如何知道有哪些模型可以加载？
+
+```bash
+# 列出所有运行
+ls -lh logs/rough_wheeled_titatit_constraint/
+
+# 列出特定运行的所有模型
+ls -lh logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/
+```
+
+### Q: 训练时出现 CUDA out of memory 错误怎么办？
+
+减少环境数量：
+
+```bash
+python train.py --task=wheeled_titatit --num_envs=2048
+```
+
+或者使用 CPU 训练（速度会很慢）：
+
+```bash
+python train.py --task=wheeled_titatit --rl_device=cpu
+```
+
+
+### Q: Simple Play 生成的视频无法播放怎么办？
+
+尝试更换视频编码器（参见"视频录制说明"部分），或使用其他播放器（如 VLC）。
+
+### Q: 如何调整机器人的运动命令？
+
+在 `simple_play.py` 第 117-120 行修改命令：
+
+```python
+env.commands[:,0] = 1  # x方向速度
+env.commands[:,1] = 0  # y方向速度
+env.commands[:,2] = 0  # 旋转速度
+env.commands[:,3] = 0  # 步态类型
+```
+
+### Q: 训练多久可以看到效果？
+
+通常需要训练 2000-3000 次迭代才能看到初步效果，完整训练可能需要 6000-10000 次迭代。具体时间取决于：
+
+- 硬件性能（GPU）
+- 环境数量
+- 任务复杂度
+
+建议使用 TensorBoard 实时监控训练进度。
+
+### Q: 如何使用多个 GPU 进行训练？
+
+使用 Horovod 进行多 GPU 训练：
+
+```bash
+python train.py --task=wheeled_titatit --horovod
+```
+
+---
+
+## 项目说明
+
+### 文件说明
+
+- `train.py`: 主训练脚本
+- `simple_play.py`: 模型测试和可视化脚本
+- `global_config.py`: 全局配置
+- `configs/`: 任务和算法配置文件
+- `envs/`: 环境实现
+- `modules/`: 神经网络模块
+- `algorithm/`: RL 算法实现
+- `runner/`: 训练运行器
+- `utils/`: 工具函数
+- `resources/`: 机器人模型资源文件
+
+### 配置文件
+
+主要的配置文件位于 `configs/` 目录：
+
+- `wheeled_titatit_constraint_him.py`: TitaTIT 轮足机器人配置
+
+可以修改这些文件来调整：
+
+- 奖励函数
+- 环境参数
+- 地形配置
+- 网络结构
+- 训练超参数
+
+### 日志和模型
+
+训练日志和模型保存在 `logs/` 目录下：
+
+```
+logs/
+└── rough_wheeled_titatit_constraint/
+    ├── <run_name_1>/
+    │   ├── model_1000.pt
+    │   ├── model_2000.pt
+    │   ├── ...
+    │   └── events.out.tfevents...
+    └── <run_name_2>/
+        └── ...
+```
+
+---
+
+## 参考资源
+
+- [Isaac Gym Documentation](https://developer.nvidia.com/isaac-gym)
+- [PyTorch Documentation](https://pytorch.org/docs/stable/index.html)
+- [TensorBoard Documentation](https://www.tensorflow.org/tensorboard)
+- [N3PO Locomotion](https://github.com/zeonsunlightyu/LocomotionWithNP3O.git)
+- [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)
+
+---
+
+## 许可证
+
+请参考 [LICENSE](LICENSE) 文件。
+
+---
+
+## 联系方式
+
+如有问题或建议，请通过 GitHub Issues 联系。
