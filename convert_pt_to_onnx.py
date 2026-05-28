@@ -114,7 +114,8 @@ def load_model_and_convert_to_onnx(pt_path, onnx_path, device='cpu'):
     print(f"  - 输入2 (obs_hist) shape: {tuple(hist_demo_input.shape)}")
     print(f"  - 输出 (actions) shape: (1, {num_actions})")
     
-    # 导出 ONNX
+    # 导出 ONNX (固定 batch_size=1，适配 TensorRT)
+    # 注意：对于机器狗实时控制，batch_size 永远是 1，不需要动态维度
     torch.onnx.export(
         actor_backbone,
         (obs_demo_input, hist_demo_input),
@@ -123,12 +124,7 @@ def load_model_and_convert_to_onnx(pt_path, onnx_path, device='cpu'):
         opset_version=11,          # ONNX opset 版本
         do_constant_folding=True,  # 是否执行常量折叠优化
         input_names=['obs', 'obs_hist'],
-        output_names=['actions'],
-        dynamic_axes={
-            'obs': {0: 'batch_size'},
-            'obs_hist': {0: 'batch_size'},
-            'actions': {0: 'batch_size'}
-        }
+        output_names=['actions']
     )
     
     print(f"  ONNX 模型已保存到: {onnx_path}")
