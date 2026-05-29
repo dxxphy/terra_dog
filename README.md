@@ -9,7 +9,7 @@
 本仓库强化学习部分基于：
 
 - [N3PO Locomotion](https://github.com/zeonsunlightyu/LocomotionWithNP3O.git)
-- [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)
+- [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)v
 
 ---
 
@@ -20,7 +20,7 @@
 | 显卡               | RTX 4090                                     |
 | CUDA               | CUDA 12.4                                    |
 | 训练环境           | Isaac Gym                                    |
-| sim2sim            | Webots 2023                                  |
+| sim2sim            |MuJoCo                                       |
 | ROS                | ROS 2 Humble                                 |
 | 推理               | RTX 4090 / Jetson Orin NX on TITA + TensorRT |
 | 虚拟环境           | Miniconda (Python 3.8)                       |
@@ -45,6 +45,7 @@ quadruped-wheel-titatit-rl/
 ├── resources/           # 资源文件（URDF、mesh等）
 ├── train.py             # 训练脚本
 ├── simple_play.py       # 模型测试/可视化脚本
+├── ddt_ros2_ws/         # sim2sim仿真环境（Git Submodule）
 └── logs/                # 训练日志和模型保存目录
 ```
 
