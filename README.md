@@ -11,23 +11,23 @@
 - [N3PO Locomotion](https://github.com/zeonsunlightyu/LocomotionWithNP3O.git)
 - [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)
 
+---
+
 ### 参考环境
 
-| Environment        | Description                     |
-| ------------------ | ------------------------------- |
-| 显卡               | RTX 4090                        |
-| CUDA               | CUDA 12.4                       |
-| 训练环境           | Isaac Gym                       |
-| sim2sim            | Webots 2023                     |
-| ROS                | ROS 2 Humble                    |
+| Environment        | Description                                  |
+| ------------------ | -------------------------------------------- |
+| 显卡               | RTX 4090                                     |
+| CUDA               | CUDA 12.4                                    |
+| 训练环境           | Isaac Gym                                    |
+| sim2sim            | Webots 2023                                  |
+| ROS                | ROS 2 Humble                                 |
 | 推理               | RTX 4090 / Jetson Orin NX on TITA + TensorRT |
-| 虚拟环境           | Miniconda                       |
+| 虚拟环境           | Miniconda (Python 3.8)                       |
 
 ---
 
-## 快速开始
-
-### 项目结构
+## 项目结构
 
 ```
 quadruped-wheel-titatit-rl/
@@ -50,9 +50,88 @@ quadruped-wheel-titatit-rl/
 
 ---
 
-## 训练
+## 环境搭建
 
-### 开始训练
+### 1. 安装 NVIDIA 显卡驱动
+
+使用 Ubuntu 软件中心安装或运行以下命令：
+
+```bash
+sudo apt update
+sudo apt install nvidia-driver-535
+```
+
+### 2. 安装 Miniconda
+
+下载并安装 Miniconda，然后创建项目专用虚拟环境。
+
+```bash
+# 1. 下载 Miniconda 安装脚本
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+
+# 2. 运行安装脚本（阅读许可协议，输入 yes 同意，按回车确认默认安装路径）
+bash Miniconda3-latest-Linux-x86_64.sh
+
+# 3. 初始化 conda（安装完成后运行，或重启终端）
+source ~/.bashrc
+
+# 4. 创建 Python 3.8 虚拟环境
+conda create -n terra_dog python=3.8 -y
+
+# 5. 激活虚拟环境
+conda activate terra_dog
+```
+
+### 3. 安装 CUDA 与 PyTorch
+
+本项目使用 PyTorch 自带的 CUDA 运行时库，无需手动安装完整的 CUDA Toolkit。
+
+#### 3.1 验证驱动
+
+使用以下指令检查驱动是否正常安装：
+
+```bash
+nvidia-smi
+```
+
+#### 3.2 安装 PyTorch (CUDA 12.4)
+
+在激活的虚拟环境中安装 PyTorch：
+
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+```
+
+#### 3.3 验证 CUDA 版本
+
+安装后使用以下指令检查是否正常运行 CUDA 12.4：
+
+```bash
+python -c "import torch; print(torch.version.cuda)"
+```
+
+> **注意**：如需完整的 CUDA Toolkit（如用于编译自定义 CUDA 算子），请参考 [NVIDIA CUDA Toolkit Archive](https://developer.nvidia.com/cuda-toolkit-archive) 进行安装。
+
+### 4. 安装 TensorRT
+
+根据 CUDA 版本安装对应的 TensorRT。本项目使用 CUDA 12.4，对应安装 TensorRT 10.13.0.35 版本。
+
+参考链接：[NVIDIA TensorRT Download](https://developer.nvidia.com/nvidia-tensorrt-10x-download)
+
+### 5. 安装 Isaac Gym
+
+参考链接：[Isaac Gym Download](https://developer.nvidia.com/isaac-gym/download)
+
+> **重要提示**：  
+> Isaac Gym 官方支持到 Ubuntu 20.04 和 Python 3.8。如果在 Ubuntu 22.04 上遇到兼容性问题（通常是因为系统 Python 默认为 3.10），请参考以下解决方案：
+>
+> [Isaac Gym 在 Ubuntu 22.04 上的安装问题解决方法](https://blog.csdn.net/sinat_27236401/article/details/148376823)
+
+---
+
+## 训练指南
+
+### 1. 基本训练
 
 使用默认配置开始训练：
 
@@ -60,7 +139,7 @@ quadruped-wheel-titatit-rl/
 python train.py --task=wheeled_titatit
 ```
 
-### 自定义训练参数
+### 2. 自定义训练参数
 
 ```bash
 # 指定训练迭代次数
@@ -79,7 +158,7 @@ python train.py --task=wheeled_titatit --experiment_name=my_experiment
 python train.py --task=wheeled_titatit --run_name=test_run
 ```
 
-### 从某个位置继续训练
+### 3. 断点续训
 
 从最新的 checkpoint 继续训练：
 
@@ -103,7 +182,7 @@ python train.py --task=wheeled_titatit --resume --checkpoint=3000
 python train.py --task=wheeled_titatit --resume --load_run=Apr07_01-51-37_test_barlowtwins_feetcontact --checkpoint=5000
 ```
 
-### 训练参数说明
+### 4. 训练参数说明
 
 | 参数                   | 类型    | 默认值    | 说明                                     |
 | ---------------------- | ------- | --------- | ---------------------------------------- |
@@ -123,7 +202,7 @@ python train.py --task=wheeled_titatit --resume --load_run=Apr07_01-51-37_test_b
 
 ## 监控训练
 
-### 使用 TensorBoard
+### 1. 使用 TensorBoard
 
 在训练过程中或训练后，使用 TensorBoard 查看训练曲线和指标：
 
@@ -140,7 +219,7 @@ tensorboard --logdir logs/rough_wheeled_titatit_constraint --bind_all
 
 然后在浏览器中打开 `http://localhost:6006` 查看训练曲线。
 
-### 理解关键指标
+### 2. 理解关键指标
 
 - **episode_length**: 每个回合的平均长度
 - **mean_reward**: 平均奖励（越高越好）
@@ -151,25 +230,11 @@ tensorboard --logdir logs/rough_wheeled_titatit_constraint --bind_all
 - **xy_vel**: XY角速度（旋转运动，越小越稳定）
 - **feet_air_reward**: 脚在空中的奖励
 
-### 查看保存的模型
-
-训练过程中会定期保存模型 checkpoint，保存在 `logs/rough_wheeled_titatit_constraint/<run_name>/` 目录下：
-
-```bash
-# 列出所有运行
-ls -lh logs/rough_wheeled_titatit_constraint/
-
-# 列出特定运行的所有模型
-ls -lh logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/
-```
-
-模型文件格式为 `model_<iteration>.pt`，例如 `model_1000.pt`、`model_3000.pt` 等。
-
 ---
 
 ## 模型测试与可视化
 
-### Simple Play 基本用法
+### 1. Simple Play 基本用法
 
 `simple_play.py` 用于加载训练好的模型并进行可视化测试。
 
@@ -188,7 +253,6 @@ python simple_play.py --task=wheeled_titatit
 python simple_play.py --task=wheeled_titatit \
     --checkpoint_path logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/model_3000.pt
 
-
 # 加载根目录的模型
 python simple_play.py --task=wheeled_titatit --checkpoint_path model_6000.pt
 ```
@@ -199,209 +263,13 @@ python simple_play.py --task=wheeled_titatit --checkpoint_path model_6000.pt
 python simple_play.py --task=wheeled_titatit --headless
 ```
 
-
-### 推荐工作流程
-
-1. **使用 TensorBoard 查看训练曲线**
-   ```bash
-   tensorboard --logdir logs/rough_wheeled_titatit_constraint
-   ```
-   在浏览器中打开 `http://localhost:6006` 查看训练曲线，找出性能最好的 checkpoint。
-
-2. **加载性能最好的模型**
-   假设发现 3500 步的奖励最高：
-   ```bash
-   python simple_play.py --task=wheeled_titatit \
-       --checkpoint_path logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/model_3500.pt
-   ```
-
-3. **查看生成的统计信息**
-   运行后会在终端输出：
-   - `action rate`: 动作变化率（越小越平滑）
-   - `z vel`: Z轴速度（垂直运动，越小越稳定）
-   - `xy_vel`: XY角速度（旋转运动，越小越稳定）
-   - `feet air reward`: 脚在空中的奖励
-   
-   这些指标越低，说明机器人运动越平稳。
-
-4. **录制视频**
-   运行后会在当前目录生成 `record.mp4` 文件。
-
-### Simple Play 参数说明
+### 2. Simple Play 参数说明
 
 | 参数              | 类型    | 默认值    | 说明                                   |
 | ----------------- | ------- | --------- | -------------------------------------- |
 | `--task`          | str     | wheeled_titatit | 任务名称                           |
 | `--checkpoint_path` | str   | None      | 模型文件的完整路径                     |
 | `--headless`      | flag    | False     | 无头模式（不显示图形界面）             |
-
-### 视频录制说明
-
-- 默认使用 MP4V 编码器，生成的视频格式为 MP4
-- 视频保存在当前目录，文件名为 `record.mp4`
-- 视频时长约 40 秒（可在 `simple_play.py` 第 97 行修改）
-- 如果需要在某些播放器中播放，可能需要安装相应的解码器
-
-**更换视频编码器：**
-
-如需更通用的格式，可以修改 `simple_play.py` 第 130 行：
-
-```python
-# 改为 MJPEG（最兼容）
-video = cv2.VideoWriter('record.avi', cv2.VideoWriter_fourcc(*'MJPG'), int(1 / env.dt), (img.shape[1],img.shape[0]))
-
-# 改为 H.264（需要额外编译支持）
-video = cv2.VideoWriter('record.mp4', cv2.VideoWriter_fourcc(*'avc1'), int(1 / env.dt), (img.shape[1],img.shape[0]))
-```
-
----
-
-## 高级功能
-
-### 批量生成多个 checkpoint 的视频
-
-创建一个脚本 `batch_record.sh`：
-
-```bash
-#!/bin/bash
-RUN_NAME="Apr07_01-51-37_test_barlowtwins_feetcontact"
-CHECKPOINTS=(1000 2000 3000 4000 5000 6000)
-
-for i in "${CHECKPOINTS[@]}"; do
-    echo "Processing model_$i.pt..."
-    python simple_play.py --task=wheeled_titatit \
-        --checkpoint_path logs/rough_wheeled_titatit_constraint/$RUN_NAME/model_${i}.pt
-    mv record.mp4 record_model_${i}.mp4
-done
-
-echo "All videos generated!"
-```
-
-运行脚本：
-
-```bash
-chmod +x batch_record.sh
-./batch_record.sh
-```
-
-### 导出模型为 TorchScript 格式
-
-训练好的模型可以导出为 TorchScript 格式，用于部署：
-
-```bash
-python simple_play.py --task=wheeled_titatit --checkpoint_path model_6000.pt
-```
-
-运行后会自动在当前目录生成 `model.pt` 文件，这是导出的 TorchScript 模型。
-
----
-
-## 常见问题
-
-### Q: 如何知道有哪些模型可以加载？
-
-```bash
-# 列出所有运行
-ls -lh logs/rough_wheeled_titatit_constraint/
-
-# 列出特定运行的所有模型
-ls -lh logs/rough_wheeled_titatit_constraint/Apr07_01-51-37_test_barlowtwins_feetcontact/
-```
-
-### Q: 训练时出现 CUDA out of memory 错误怎么办？
-
-减少环境数量：
-
-```bash
-python train.py --task=wheeled_titatit --num_envs=2048
-```
-
-或者使用 CPU 训练（速度会很慢）：
-
-```bash
-python train.py --task=wheeled_titatit --rl_device=cpu
-```
-
-
-### Q: Simple Play 生成的视频无法播放怎么办？
-
-尝试更换视频编码器（参见"视频录制说明"部分），或使用其他播放器（如 VLC）。
-
-### Q: 如何调整机器人的运动命令？
-
-在 `simple_play.py` 第 117-120 行修改命令：
-
-```python
-env.commands[:,0] = 1  # x方向速度
-env.commands[:,1] = 0  # y方向速度
-env.commands[:,2] = 0  # 旋转速度
-env.commands[:,3] = 0  # 步态类型
-```
-
-### Q: 训练多久可以看到效果？
-
-通常需要训练 2000-3000 次迭代才能看到初步效果，完整训练可能需要 6000-10000 次迭代。具体时间取决于：
-
-- 硬件性能（GPU）
-- 环境数量
-- 任务复杂度
-
-建议使用 TensorBoard 实时监控训练进度。
-
-### Q: 如何使用多个 GPU 进行训练？
-
-使用 Horovod 进行多 GPU 训练：
-
-```bash
-python train.py --task=wheeled_titatit --horovod
-```
-
----
-
-## 项目说明
-
-### 文件说明
-
-- `train.py`: 主训练脚本
-- `simple_play.py`: 模型测试和可视化脚本
-- `global_config.py`: 全局配置
-- `configs/`: 任务和算法配置文件
-- `envs/`: 环境实现
-- `modules/`: 神经网络模块
-- `algorithm/`: RL 算法实现
-- `runner/`: 训练运行器
-- `utils/`: 工具函数
-- `resources/`: 机器人模型资源文件
-
-### 配置文件
-
-主要的配置文件位于 `configs/` 目录：
-
-- `wheeled_titatit_constraint_him.py`: TitaTIT 轮足机器人配置
-
-可以修改这些文件来调整：
-
-- 奖励函数
-- 环境参数
-- 地形配置
-- 网络结构
-- 训练超参数
-
-### 日志和模型
-
-训练日志和模型保存在 `logs/` 目录下：
-
-```
-logs/
-└── rough_wheeled_titatit_constraint/
-    ├── <run_name_1>/
-    │   ├── model_1000.pt
-    │   ├── model_2000.pt
-    │   ├── ...
-    │   └── events.out.tfevents...
-    └── <run_name_2>/
-        └── ...
-```
 
 ---
 
@@ -414,13 +282,3 @@ logs/
 - [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)
 
 ---
-
-## 许可证
-
-请参考 [LICENSE](LICENSE) 文件。
-
----
-
-## 联系方式
-
-如有问题或建议，请通过 GitHub Issues 联系。
