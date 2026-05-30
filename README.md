@@ -9,7 +9,7 @@
 本仓库强化学习部分基于：
 
 - [N3PO Locomotion](https://github.com/zeonsunlightyu/LocomotionWithNP3O.git)
-- [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)v
+- [TITATIT-Quadruped-Wheeled Mode](https://github.com/DDTRobot/quadruped-wheel-titatit-rl)
 
 ---
 
