@@ -15,3 +15,5 @@ logs/
 *.avi
 *.mp4
 *.mkv
+# 但保留演示视频
+!resources/record1.mp4

@@ -13,6 +13,12 @@
 
 ---
 
+### 演示视频
+
+<video src="resources/record1.mp4" controls width="720"></video>
+
+---
+
 ### 参考环境
 
 | Environment        | Description                                  |
